@@ -2,67 +2,59 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <regex.h>
 
 #define MAX_LINE_LENGTH 100
 
 bool check_sigma(char Sigma[]){
-    // Check if Sigma is correct
-    unsigned int len = strlen(Sigma);
-    if (len == 1){
-        // the line is empty
-        printf("Error 1: Wrong format for Sigma\n");
+    regex_t regex;
+
+    const char *patron =
+    "^\\{([^,{} ]+(,[^,{} ]+)*)?\\}$";
+
+    if (regcomp(&regex, patron, REG_EXTENDED)){
         return false;
-    }else if (len == 2 && Sigma[0] != '{'){
-        // the fisrt simbol is not {
-        printf("Error 2: Wrong format for Sigma\n");
-        printf("Sigma: %s\n", Sigma);
-        return false;
-    }else if (len > 1 && Sigma[0] == '{'){
-        // the first simbol is { and there are more simbols
-        if(Sigma[len - 2] != '}'){
-            // does not end with }
-            printf("Error 3: Wrong format for Sigma\n");
-            printf("Sigma: %s\n", Sigma);
-            return false;
-        }else if (Sigma[1] == '}' && Sigma[2] != '\n'){
-            // is empty set but has extra characters
-            printf("Error 4: Wrong format for Sigma\n");
-            printf("Sigma: %s\n", Sigma);
-            return false;
-        }else if(Sigma[1] == '}' && Sigma[2] == '\n'){
-            // is empty set and has correct format
-            printf("Sigma is an empty set\n");
-            printf("Sigma: %s\n", Sigma);
-            return true;
-        }else{
-            // at this case, we know that
-            // Sigma[0] == '{' and Sigma[len - 2] == '}',
-            // so we can check the symbols in between
-            for (unsigned int i = 1; i < len - 2; i++){
-                if (Sigma[i] == ' ' || Sigma[i] == '{' || Sigma[i] == '}'){
-                    // if there is a space or a new line in the middle of the symbols, it is an error
-                    printf("Error 5: Wrong format for Sigma\n");
-                    printf("Sigma: %s\n", Sigma);
-                    return false;
-                }else if (Sigma[i] == ',' && (Sigma[i - 1] == '{' || Sigma[i - 1] == ',' || Sigma[i + 1] == '}' || Sigma[i + 1] == ',')){
-                    // if there is no symbols between the { and }, it is an error
-                    printf("Error 6: Wrong format for Sigma\n");
-                    printf("Sigma: %s\n", Sigma);
-                    return false;
-                }
-            }
-        }
     }
 
-    // The format of Sigma is correct, now we can check for duplicate symbols
-    for (unsigned int i = 1; i < len - 2; i++){
-        if (Sigma[i] != ',' && Sigma[i] != ' ' && Sigma[i] != '{' && Sigma[i] != '}'){
-            for (unsigned int j = i + 1; j < len - 2; j++){
-                if (Sigma[i] == Sigma[j]){
-                    printf("Error 7: Duplicate symbol %c in Sigma\n", Sigma[i]);
-                    printf("Sigma: %s\n", Sigma);
-                    return false;
-                }
+    bool valid = !regexec(&regex, Sigma, 0, NULL, 0);
+    regfree(&regex);
+
+    if (!valid){
+        printf("Error: Wrong format for Sigma\n");
+        printf("Sigma: %s\n", Sigma);
+        return false;
+    }
+
+    char copy[MAX_LINE_LENGTH];
+    strcpy(copy, Sigma);
+
+    // Skip '{'
+    char *content = copy + 1;
+
+    // Remove '}'
+    content[strlen(content) - 1] = '\0';
+
+    // Split tokens
+    char *tokens[MAX_LINE_LENGTH];
+    int token_count = 0;
+
+    char *token = strtok(content, ",");
+
+    while (token != NULL){
+        tokens[token_count++] = token;
+        token = strtok(NULL, ",");
+    }
+
+    // Check duplicates
+    for (int i = 0; i < token_count; i++){
+        for (int j = i + 1; j < token_count; j++){
+
+            if (strcmp(tokens[i], tokens[j]) == 0){
+
+                printf("Error: Duplicate symbol %s in Sigma\n", tokens[i]);
+                printf("Sigma: %s\n", Sigma);
+
+                return false;
             }
         }
     }
@@ -86,6 +78,9 @@ int check_format_machine(char* file1){
             fclose(fp);
             return -1;
         }
+
+        // Remove newline character
+        line[strcspn(line, "\n")] = '\0';
 
         switch (i){
             case 0:
