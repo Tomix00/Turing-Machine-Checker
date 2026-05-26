@@ -6,6 +6,64 @@
 
 #define MAX_LINE_LENGTH 100
 
+bool check_q(char Q[]){
+    // Check if Q is in the correct format
+    regex_t regex;
+
+    const char *patron =
+    "^\\{(q[a-zA-Z0-9]+(,q[a-zA-Z0-9]+)*)?\\}$";
+
+    if (regcomp(&regex, patron, REG_EXTENDED)){
+        return false;
+    }
+
+    bool valid = !regexec(&regex, Q, 0, NULL, 0);
+    regfree(&regex);
+
+    if (!valid){
+        printf("\nError: Wrong format for Q\n");
+        printf("Q: %s\n\n", Q);
+        return false;
+    }
+
+    char copy[MAX_LINE_LENGTH];
+    strcpy(copy, Q);
+
+    // Remove '{'
+    char *content = copy + 1;
+
+    // Remove '}'
+    content[strlen(content) - 1] = '\0';
+
+    char *tokens[100];
+    int token_count = 0;
+
+    // Split by commas
+    char *token = strtok(content, ",");
+
+    while (token != NULL){
+        tokens[token_count++] = token;
+        token = strtok(NULL, ",");
+    }
+
+    // Compare tokens
+    for (int i = 0; i < token_count; i++){
+
+        for (int j = i + 1; j < token_count; j++){
+
+            if (strcmp(tokens[i], tokens[j]) == 0){
+
+                printf("\nError: Duplicate state %s\n", tokens[i]);
+                printf("Q: %s\n\n", Q);
+
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 bool check_sigma(char Sigma[]){
     regex_t regex;
 
@@ -20,8 +78,8 @@ bool check_sigma(char Sigma[]){
     regfree(&regex);
 
     if (!valid){
-        printf("Error: Wrong format for Sigma\n");
-        printf("Sigma: %s\n", Sigma);
+        printf("\nError: Wrong format for Sigma\n");
+        printf("Sigma: %s\n\n", Sigma);
         return false;
     }
 
@@ -51,8 +109,8 @@ bool check_sigma(char Sigma[]){
 
             if (strcmp(tokens[i], tokens[j]) == 0){
 
-                printf("Error: Duplicate symbol %s in Sigma\n", tokens[i]);
-                printf("Sigma: %s\n", Sigma);
+                printf("\nError: Duplicate symbol %s in Sigma\n", tokens[i]);
+                printf("Sigma: %s\n\n", Sigma);
 
                 return false;
             }
@@ -85,6 +143,11 @@ int check_format_machine(char* file1){
         switch (i){
             case 0:
                 // check Q
+                if (!check_q(line)){
+                    fclose(fp);
+                    return -1;
+                }
+                printf("Q format is correct\n");
                 break;
             case 1:
                 // check q0
@@ -142,11 +205,11 @@ int main(int argc, char* argv[]){
     char* input = argv[2];
     // Check correct format
     if (check_format_machine(machine) == -1){
-        printf("Error: File %s has incorrect format.\n", machine);
+        printf("Error: File %s has incorrect format.\n\n", machine);
         exit(1);
     }
     if (check_format_input(input) == -1){
-        printf("Error: File %s has incorrect format.\n", input);
+        printf("Error: File %s has incorrect format.\n\n", input);
         exit(1);
     }
 
