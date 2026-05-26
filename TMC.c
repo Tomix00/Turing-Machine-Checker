@@ -5,6 +5,7 @@
 #include <regex.h>
 
 #define MAX_LINE_LENGTH 100
+#define MAX_RULES 50
 
 //auxiliary function to print arrays
 void dump(char array[]){
@@ -324,9 +325,79 @@ bool check_blank_symbol(char blank_symbol[], char Gamma[]){
     return false;
 }
 
-bool check_rules(char rules[], char Q[], char Sigma[], char Gamma[]){
+bool symbol_in_alphabet(const char *symbol, const char *alphabet){
+    // Validate if current symbol is in alphabet
+    char copy[MAX_LINE_LENGTH];
+    char *token;
+
+    // copy and clean the alphabet
+    strcpy(copy, alphabet);
+    //remove '{'
+    char *content = copy + 1;
+    //remove '}'
+    content[strlen(content) - 1] = '\0';
+
+    // Split by commas
+    token = strtok(content, ",");
+
+    // Compare tokens with symbol
+    while (token != NULL){
+        if (strcmp(token, symbol) == 0){
+            return true;
+        }
+        token = strtok(NULL, ",");
+    }
+    
+    return false;
+}
+
+bool state_in_set(const char *state, const char *states_set){
+    // Validate if current state is in Q
+    char copy[MAX_LINE_LENGTH];
+    char *token;
+
+    // Copy and clean states set
+    strcpy(copy, states_set);
+    copy[strlen(copy) - 1] = '\0';
+    memmove(copy, copy + 1, strlen(copy));
+
+    // Split by commas
+    token = strtok(copy, ",");
+
+    // Compare tokens with state
+    while(token != NULL){
+        if (strcmp(token, state) == 0){
+            return true;
+        }
+        token = strtok(NULL, ",");
+    }
+    return false;
+}
+
+bool check_rule(char rule[], char Q[], char Sigma[], char Gamma[]){
     // Check if rules are in the correct format
     // Check if rules are valid according to Q, Sigma and Gamma
+    regex_t regex;
+
+    const char *patron = 
+    "^\\((q[a-zA-Z0-9]+),([^,{} ]+)\\)=\\((q[a-zA-Z0-9]+),([^,{} ]+),(L|R|K)\\)$";
+    
+    if (regcomp(&regex, patron, REG_EXTENDED)){
+        return false;
+    }
+
+    bool valid = !regexec(&regex, rule, 0, NULL, 0);
+    regfree(&regex);
+
+    if (!valid){
+        printf("\nError: Wrong format for rules\n");
+        printf("Rule: %s\n\n",rule);
+        return false;
+    }
+
+    //check if rule has valid arguments
+    
+
     return true;
 }
 
@@ -338,26 +409,23 @@ int check_format_machine(char* file1){
         return -1;
     }
 
+    // buffer to store a line read
+    char line[MAX_LINE_LENGTH];
+    int line_count = 0;
+
     // Variables to store the components of the Turing machine
     char q[MAX_LINE_LENGTH];
     char f[MAX_LINE_LENGTH];
     char sigma[MAX_LINE_LENGTH];
     char gamma[MAX_LINE_LENGTH];
     
-    for (unsigned int i = 0; i < 7 ; i++){
+    while (fgets(line, MAX_LINE_LENGTH, fp) != NULL){
         // Read line by line and check the format of each line
-        char line[MAX_LINE_LENGTH];
-        if (fgets(line, MAX_LINE_LENGTH, fp) == NULL){
-            // Check if file is empty or has less than 6 lines
-            printf("Error: File %s is empty.\n", file1);
-            fclose(fp);
-            return -1;
-        }
 
         // Remove newline character
         line[strcspn(line, "\n")] = '\0';
 
-        switch (i){
+        switch (line_count){
             case 0:
                 // check Q
                 if (!check_q(line, q)){
@@ -418,15 +486,22 @@ int check_format_machine(char* file1){
                 break;
             default:
                 //Check rules
-                if (!check_rules(line, q, sigma, gamma)){
+                if (!check_rule(line, q, sigma, gamma)){
                     fclose(fp);
                     return -1;
                 }
-                printf("\nRules format is correct - needs implementation\n");
+                //printf("\nRules format is correct - needs implementation\n");
                 break;
         }
-
+        line_count++;
     }
+
+    if (line_count == 0){
+        printf("Error: File %s is empty.\n", file1);
+        fclose(fp);
+        return -1;
+    }
+
     fclose(fp);
     return 0;
 }
