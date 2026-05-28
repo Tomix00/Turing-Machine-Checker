@@ -7,10 +7,79 @@
 #define MAX_LINE_LENGTH 100
 #define MAX_RULES 50
 
+/*
+Need to implement the following functions:
+ - check_rule: By cheking the format of the
+               rule and validating that the
+               states and symbols used in
+               the rule are valid according
+               to Q, Sigma and Gamma.
+ - check_format_input: By checking the
+               format of the input file
+               and validating that the
+               input string is composed of
+               symbols in Sigma.
+*/
+
 //auxiliary function to print arrays
 void dump(char array[]){
     printf("%s\n", array);
 }
+
+#pragma region Auxiliary functions
+
+bool symbol_in_alphabet(const char *symbol, const char *alphabet){
+    // Validate if current symbol is in alphabet
+    char copy[MAX_LINE_LENGTH];
+    char *token;
+
+    // copy and clean the alphabet
+    strcpy(copy, alphabet);
+    //remove '{'
+    char *content = copy + 1;
+    //remove '}'
+    content[strlen(content) - 1] = '\0';
+
+    // Split by commas
+    token = strtok(content, ",");
+
+    // Compare tokens with symbol
+    while (token != NULL){
+        if (strcmp(token, symbol) == 0){
+            return true;
+        }
+        token = strtok(NULL, ",");
+    }
+    
+    return false;
+}
+
+bool state_in_set(const char *state, const char *states_set){
+    // Validate if current state is in Q
+    char copy[MAX_LINE_LENGTH];
+    char *token;
+
+    // Copy and clean states set
+    strcpy(copy, states_set);
+    copy[strlen(copy) - 1] = '\0';
+    memmove(copy, copy + 1, strlen(copy));
+
+    // Split by commas
+    token = strtok(copy, ",");
+
+    // Compare tokens with state
+    while(token != NULL){
+        if (strcmp(token, state) == 0){
+            return true;
+        }
+        token = strtok(NULL, ",");
+    }
+    return false;
+}
+
+#pragma endregion
+
+#pragma region Validation functions
 
 bool check_q(char Q[], char load[]){
     // Check if Q is in the correct format
@@ -325,55 +394,6 @@ bool check_blank_symbol(char blank_symbol[], char Gamma[]){
     return false;
 }
 
-bool symbol_in_alphabet(const char *symbol, const char *alphabet){
-    // Validate if current symbol is in alphabet
-    char copy[MAX_LINE_LENGTH];
-    char *token;
-
-    // copy and clean the alphabet
-    strcpy(copy, alphabet);
-    //remove '{'
-    char *content = copy + 1;
-    //remove '}'
-    content[strlen(content) - 1] = '\0';
-
-    // Split by commas
-    token = strtok(content, ",");
-
-    // Compare tokens with symbol
-    while (token != NULL){
-        if (strcmp(token, symbol) == 0){
-            return true;
-        }
-        token = strtok(NULL, ",");
-    }
-    
-    return false;
-}
-
-bool state_in_set(const char *state, const char *states_set){
-    // Validate if current state is in Q
-    char copy[MAX_LINE_LENGTH];
-    char *token;
-
-    // Copy and clean states set
-    strcpy(copy, states_set);
-    copy[strlen(copy) - 1] = '\0';
-    memmove(copy, copy + 1, strlen(copy));
-
-    // Split by commas
-    token = strtok(copy, ",");
-
-    // Compare tokens with state
-    while(token != NULL){
-        if (strcmp(token, state) == 0){
-            return true;
-        }
-        token = strtok(NULL, ",");
-    }
-    return false;
-}
-
 bool check_rule(char rule[], char Q[], char Sigma[], char Gamma[]){
     // Check if rules are in the correct format
     // Check if rules are valid according to Q, Sigma and Gamma
@@ -396,10 +416,20 @@ bool check_rule(char rule[], char Q[], char Sigma[], char Gamma[]){
     }
 
     //check if rule has valid arguments
+    // Extract components of the rule
+    char current_state[MAX_LINE_LENGTH];
+    char current_symbol[MAX_LINE_LENGTH];
+    char new_state[MAX_LINE_LENGTH];
+    char new_symbol[MAX_LINE_LENGTH];
+    char direction[MAX_LINE_LENGTH];
+    sscanf(rule, "(%[^,],%[^)])=(%[^,],%[^,],%s)", current_state, current_symbol, new_state, new_symbol, direction);
     
 
     return true;
 }
+
+#pragma endregion
+
 
 int check_format_machine(char* file1){
     FILE* fp = fopen(file1, "r");
@@ -506,7 +536,7 @@ int check_format_machine(char* file1){
     return 0;
 }
 
-int check_format_input(char* file2){
+int check_format_input(char* file2, char Sigma[]){
     // Check if file exists
     FILE* fp = fopen(file2, "r");
     if (fp == NULL){
@@ -535,7 +565,8 @@ int main(int argc, char* argv[]){
         printf("Error: File %s has incorrect format.\n\n", machine);
         exit(1);
     }
-    if (check_format_input(input) == -1){
+    char Sigma[MAX_LINE_LENGTH];
+    if (check_format_input(input, Sigma) == -1){
         printf("Error: File %s has incorrect format.\n\n", input);
         exit(1);
     }
