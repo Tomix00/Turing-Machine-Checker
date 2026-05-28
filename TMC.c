@@ -7,21 +7,7 @@
 #define MAX_LINE_LENGTH 100
 #define MAX_RULES 50
 
-/*
-Need to implement the following functions:
- - check_rule: By cheking the format of the
-               rule and validating that the
-               states and symbols used in
-               the rule are valid according
-               to Q, Sigma and Gamma.
- - check_format_input: By checking the
-               format of the input file
-               and validating that the
-               input string is composed of
-               symbols in Sigma.
-*/
-
-//auxiliary function to print arrays
+//auxiliary function to print arrays, will be deleted
 void dump(char array[]){
     printf("%s\n", array);
 }
@@ -51,6 +37,7 @@ bool symbol_in_alphabet(const char *symbol, const char *alphabet){
         token = strtok(NULL, ",");
     }
     
+    printf("Error: Symbol %s is not in alphabet %s\n",symbol, alphabet);
     return false;
 }
 
@@ -74,6 +61,7 @@ bool state_in_set(const char *state, const char *states_set){
         }
         token = strtok(NULL, ",");
     }
+    printf("Error: State %s is not in Set: %s\n",state, states_set);
     return false;
 }
 
@@ -394,7 +382,7 @@ bool check_blank_symbol(char blank_symbol[], char Gamma[]){
     return false;
 }
 
-bool check_rule(char rule[], char Q[], char Sigma[], char Gamma[]){
+bool check_rule(char rule[], char Q[], char Gamma[], char load_rules[MAX_RULES][MAX_LINE_LENGTH], int rule_count){
     // Check if rules are in the correct format
     // Check if rules are valid according to Q, Sigma and Gamma
     regex_t regex;
@@ -422,14 +410,40 @@ bool check_rule(char rule[], char Q[], char Sigma[], char Gamma[]){
     char new_state[MAX_LINE_LENGTH];
     char new_symbol[MAX_LINE_LENGTH];
     char direction[MAX_LINE_LENGTH];
-    sscanf(rule, "(%[^,],%[^)])=(%[^,],%[^,],%s)", current_state, current_symbol, new_state, new_symbol, direction);
+    sscanf(rule, "(%[^,],%[^)])=(%[^,],%[^,],%s)",current_state,
+                                                  current_symbol,
+                                                  new_state,
+                                                  new_symbol,
+                                                  direction);
     
+    bool valid_args;
+    valid_args = state_in_set(current_state, Q) &&
+                 state_in_set(new_state, Q) &&
+                 symbol_in_alphabet(current_symbol, Gamma) &&
+                 symbol_in_alphabet(new_symbol, Gamma);
+    
+    if (!valid_args){
+        printf("Error ↑: Inconsistent arguments in rule\n");
+        return false;
+    }
+
+    // Check if is reapeated rule
+    for (int i = 0; i < rule_count; i++){
+        if (strcmp(load_rules[i], rule) == 0){
+            printf("\nError: Duplicate rule \"%s\" on line %d and %d\n", rule, 7 + i, 7 + rule_count);
+            return false;
+        }
+    }
+    
+    // If all checks passed, load the rule
+    strcpy(load_rules[rule_count], rule);
 
     return true;
 }
 
 #pragma endregion
 
+#pragma region Check Format
 
 int check_format_machine(char* file1){
     FILE* fp = fopen(file1, "r");
@@ -448,6 +462,8 @@ int check_format_machine(char* file1){
     char f[MAX_LINE_LENGTH];
     char sigma[MAX_LINE_LENGTH];
     char gamma[MAX_LINE_LENGTH];
+    char rules[MAX_RULES][MAX_LINE_LENGTH];
+    int rule_count = 0;
     
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL){
         // Read line by line and check the format of each line
@@ -516,11 +532,12 @@ int check_format_machine(char* file1){
                 break;
             default:
                 //Check rules
-                if (!check_rule(line, q, sigma, gamma)){
+                if (!check_rule(line, q, gamma, rules, rule_count)){
                     fclose(fp);
                     return -1;
+                }else{
+                    rule_count++;
                 }
-                //printf("\nRules format is correct - needs implementation\n");
                 break;
         }
         line_count++;
@@ -551,6 +568,8 @@ int check_format_input(char* file2, char Sigma[]){
     return 0;
 }
 
+#pragma endregion
+
 int main(int argc, char* argv[]){
     // Check usage
     if (argc != 3 || argc > 3){
@@ -562,7 +581,7 @@ int main(int argc, char* argv[]){
     char* input = argv[2];
     // Check correct format
     if (check_format_machine(machine) == -1){
-        printf("Error: File %s has incorrect format.\n\n", machine);
+        printf("Error ↑: File %s has incorrect format.\n\n", machine);
         exit(1);
     }
     char Sigma[MAX_LINE_LENGTH];
