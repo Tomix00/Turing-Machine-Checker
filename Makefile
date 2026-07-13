@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -Wextra -std=c11 -O2
 LDLIBS=-lregex
 TARGET=TMC
-SRC=main.c machine.c input_handler.c util.c
+SRC=main.c machine.c input_handler.c tm.c util.c
 MACHINE=machine.in
 INPUT=input.in
 

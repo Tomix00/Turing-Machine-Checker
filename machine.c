@@ -155,7 +155,7 @@ static bool check_blank_symbol(char blank_symbol[], char Gamma[]) {
     return false;
 }
 
-static bool check_rule(char rule[], char Q[], char Gamma[]) {
+static bool check_rule(char rule[], char Q[], char Gamma[], Rule *parsed) {
     regex_t regex;
     const char *patron = "^\\((q[a-zA-Z0-9]+),([^,{} ]+)\\)=\\((q[a-zA-Z0-9]+),([^,{} ]+),(L|R|K)\\)$";
     if (regcomp(&regex, patron, REG_EXTENDED)) return false;
@@ -193,10 +193,17 @@ static bool check_rule(char rule[], char Q[], char Gamma[]) {
         printf("Rule: %s\n\n", rule);
         return false;
     }
+    if (parsed != NULL) {
+        strcpy(parsed->current_state, current_state);
+        strcpy(parsed->current_symbol, current_symbol);
+        strcpy(parsed->new_state, new_state);
+        strcpy(parsed->new_symbol, new_symbol);
+        parsed->direction = direction[0];
+    }
     return true;
 }
 
-int check_format_machine(const char *filename, char *Sigma) {
+int parse_machine_file(const char *filename, TMDefinition *tm) {
     FILE *fp = fopen(filename, "r");
     if (fp == NULL) {
         printf("Error: File %s not found.", filename);
@@ -204,48 +211,51 @@ int check_format_machine(const char *filename, char *Sigma) {
     }
     char line[MAX_LINE_LENGTH];
     int line_count = 0;
-    char q[MAX_LINE_LENGTH];
-    char f[MAX_LINE_LENGTH];
-    char gamma[MAX_LINE_LENGTH];
+    tm->rule_count = 0;
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) {
         line[strcspn(line, "\n")] = '\0';
         switch (line_count) {
             case 0:
-                if (!check_q(line, q)) { fclose(fp); return -1; }
+                if (!check_q(line, tm->Q)) { fclose(fp); return -1; }
                 printf("\nQ format is correct\n");
-                dump(q);
+                dump(tm->Q);
                 printf("-------------------------------\n");
                 break;
             case 1:
-                if (!check_initial_state(line, q)) { fclose(fp); return -1; }
+                if (!check_initial_state(line, tm->Q)) { fclose(fp); return -1; }
+                strcpy(tm->q0, line);
                 printf("\nInitial state format is correct\n");
                 printf("-------------------------------\n");
                 break;
             case 2:
-                if (!check_f(line, q, f)) { fclose(fp); return -1; }
+                if (!check_f(line, tm->Q, tm->F)) { fclose(fp); return -1; }
                 printf("\nF format is correct\n");
-                dump(f);
+                dump(tm->F);
                 printf("-------------------------------\n");
                 break;
             case 3:
-                if (!check_sigma(line, Sigma)) { fclose(fp); return -1; }
+                if (!check_sigma(line, tm->Sigma)) { fclose(fp); return -1; }
                 printf("\nSigma format is correct\n");
-                dump(Sigma);
+                dump(tm->Sigma);
                 printf("-------------------------------\n");
                 break;
             case 4:
-                if (!check_gamma(line, Sigma, gamma)) { fclose(fp); return -1; }
+                if (!check_gamma(line, tm->Sigma, tm->Gamma)) { fclose(fp); return -1; }
                 printf("\nGamma format is correct\n");
-                dump(gamma);
+                dump(tm->Gamma);
                 printf("-------------------------------\n");
                 break;
             case 5:
-                if (!check_blank_symbol(line, gamma)) { fclose(fp); return -1; }
+                if (!check_blank_symbol(line, tm->Gamma)) { fclose(fp); return -1; }
+                strcpy(tm->blank, line);
                 printf("\nBlank symbol format is correct\n");
                 printf("-------------------------------\n");
                 break;
             default:
-                if (!check_rule(line, q, gamma)) { fclose(fp); return -1; }
+                if (!check_rule(line, tm->Q, tm->Gamma, &tm->rules[tm->rule_count])) {
+                    fclose(fp); return -1;
+                }
+                tm->rule_count++;
                 break;
         }
         line_count++;

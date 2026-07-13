@@ -3,7 +3,7 @@
 #include "input_handler.h"
 #include "util.h"
 
-int check_format_input(const char *filename, const char *Sigma) {
+int check_format_input(const char *filename, const char *Sigma, char *input_out) {
     FILE *fp = fopen(filename, "r");
     if (fp == NULL) {
         printf("Error: File %s not found.", filename);
@@ -25,6 +25,7 @@ int check_format_input(const char *filename, const char *Sigma) {
             return -1;
         }
     }
+    strcpy(input_out, line);
     fclose(fp);
     return 0;
 }

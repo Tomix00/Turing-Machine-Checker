@@ -1,6 +1,6 @@
 #ifndef INPUT_HANDLER_H
 #define INPUT_HANDLER_H
 
-int check_format_input(const char *filename, const char *Sigma);
+int check_format_input(const char *filename, const char *Sigma, char *input_out);
 
 #endif
