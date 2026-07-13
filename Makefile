@@ -1,7 +1,8 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -std=c11 -O2
+LDLIBS=-lregex
 TARGET=TMC
-SRC=TMC.c
+SRC=TMC.c util.c
 MACHINE=machine.in
 INPUT=input.in
 
@@ -10,11 +11,10 @@ INPUT=input.in
 all: build
 
 build:
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) $(LDLIBS)
 
 run:
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
-	clear
+	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) $(LDLIBS)
 	./$(TARGET) $(MACHINE) $(INPUT)
 
 reload: clean run
