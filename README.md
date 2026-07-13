@@ -15,7 +15,27 @@
     mostrar las descripciones instantáneas de cada transición dado el Input y según las
     reglas de transición indicadas en Machine
     - El programa se deberá detener si se llega a un estado final o un estado
-    previamente indicado por el usuario, dejando por ultimo la descripción instantánea a la que llego.
+     previamente indicado por el usuario, dejando por ultimo la descripción instantánea a la que llego.
+- Limitaciones: El problema de la parada (Halting Problem)
+    - Este programa **no puede** determinar si la máquina de Turing llegará
+      a un estado final o entrará en un bucle infinito para una entrada dada.
+      El Halting Problem (Turing, 1936) demuestra que es imposible diseñar
+      un algoritmo general que decida si una máquina de Turing se detiene.
+    - Las validaciones que realiza el programa son exclusivamente de formato
+      y consistencia estructural:
+        - **Machine:**
+            - Q: estados repetidos
+            - Estado inicial $q_0 \in Q$
+            - F: estados repetidos, y $F \subseteq Q$
+            - $\Sigma$: símbolos repetidos
+            - $\Gamma$: símbolos repetidos, y $\Sigma \subseteq \Gamma$
+            - Blank symbol $\in \Gamma - \Sigma$
+            - Cada regla $\delta$: estados usados $\in Q$, símbolos usados $\in \Gamma$
+        - **Input:**
+            - Cada símbolo de la cadena $\in \Sigma$
+    - El usuario debe ser consciente de que, aunque el formato sea correcto,
+      la máquina podría no detenerse nunca. No hay manera de comprobarlo
+      previamente a la ejecución.
 - Bibliografias, notaciones
     - Según la guia 5 de la materia Lenguages Formales y Computabilidad de la carrera Licenciatura en Ciencias de la Computación de UNC-FAMAF
 - Formatos
