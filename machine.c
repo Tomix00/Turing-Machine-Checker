@@ -4,10 +4,6 @@
 #include "machine.h"
 #include "util.h"
 
-static void dump(char array[]) {
-    printf("%s\n", array);
-}
-
 static bool check_q(char Q[], char load[]) {
     regex_t regex;
     const char *patron = "^\\{(q[a-zA-Z0-9]+(,q[a-zA-Z0-9]+)*)?\\}$";
@@ -217,39 +213,23 @@ int parse_machine_file(const char *filename, TMDefinition *tm) {
         switch (line_count) {
             case 0:
                 if (!check_q(line, tm->Q)) { fclose(fp); return -1; }
-                printf("\nQ format is correct\n");
-                dump(tm->Q);
-                printf("-------------------------------\n");
                 break;
             case 1:
                 if (!check_initial_state(line, tm->Q)) { fclose(fp); return -1; }
                 strcpy(tm->q0, line);
-                printf("\nInitial state format is correct\n");
-                printf("-------------------------------\n");
                 break;
             case 2:
                 if (!check_f(line, tm->Q, tm->F)) { fclose(fp); return -1; }
-                printf("\nF format is correct\n");
-                dump(tm->F);
-                printf("-------------------------------\n");
                 break;
             case 3:
                 if (!check_sigma(line, tm->Sigma)) { fclose(fp); return -1; }
-                printf("\nSigma format is correct\n");
-                dump(tm->Sigma);
-                printf("-------------------------------\n");
                 break;
             case 4:
                 if (!check_gamma(line, tm->Sigma, tm->Gamma)) { fclose(fp); return -1; }
-                printf("\nGamma format is correct\n");
-                dump(tm->Gamma);
-                printf("-------------------------------\n");
                 break;
             case 5:
                 if (!check_blank_symbol(line, tm->Gamma)) { fclose(fp); return -1; }
                 strcpy(tm->blank, line);
-                printf("\nBlank symbol format is correct\n");
-                printf("-------------------------------\n");
                 break;
             default:
                 if (!check_rule(line, tm->Q, tm->Gamma, &tm->rules[tm->rule_count])) {

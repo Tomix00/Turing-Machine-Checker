@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     }
 
     char input[MAX_LINE_LENGTH];
-    if (check_format_input(argv[2], tm.Sigma, input) == -1) {
+    if (check_format_input(argv[2], tm.Gamma, input) == -1) {
         printf("Error: File %s has incorrect format.\n\n", argv[2]);
         return 1;
     }
